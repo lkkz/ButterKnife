@@ -7,13 +7,15 @@ import com.cool.butterknife.core.Unbinder;
 
 /**
  * Created by cool on 2018/7/3.
+ * 生成代码参考类
  */
-public class MainActivity$ViewBinding implements Unbinder{
+public class MainActivity$ViewBinding extends BaseActivity$ViewBinding {
 
     private MainActivity target;
 
     @UiThread
     public MainActivity$ViewBinding(final MainActivity target, View source) {
+        super(target, source);
         this.target = target;
         target.textView = source.findViewById(R.id.textView);
         target.textView2 = source.findViewById(R.id.textView2);
@@ -31,6 +33,6 @@ public class MainActivity$ViewBinding implements Unbinder{
         MainActivity target = this.target;
         this.target = null;
         target.textView = null;
-
+        super.unbind();
     }
 }

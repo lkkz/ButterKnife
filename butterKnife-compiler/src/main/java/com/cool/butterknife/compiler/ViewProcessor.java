@@ -11,6 +11,7 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
@@ -34,13 +35,14 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 /**
  * Created by cool on 2018/7/5.
  */
 @AutoService(Processor.class)
-@SupportedAnnotationTypes({"com.cool.butterknife.annoation.OnClick","com.cool.butterknife.annoation.BindView"})
+@SupportedAnnotationTypes({"com.cool.butterknife.annoation.OnClick", "com.cool.butterknife.annoation.BindView"})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class ViewProcessor extends AbstractProcessor {
 
@@ -49,7 +51,7 @@ public class ViewProcessor extends AbstractProcessor {
     private Elements mElementUtils;
     private Log log;
 
-    private Map<String,ElementBean> mMaps = new HashMap<>();
+    private Map<String, ElementBean> mMaps = new HashMap<>();
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -65,28 +67,29 @@ public class ViewProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         log.e("=========process============");
 
-       if(set!= null && set.size()>0){
+        if (set != null && set.size() > 0) {
 
-           getOnClickBean(roundEnvironment);
+            getOnClickBean(roundEnvironment);
 
-           getBindViewBean(roundEnvironment);
+            getBindViewBean(roundEnvironment);
 
-           Set<Map.Entry<String, ElementBean>> entries = mMaps.entrySet();
-           for (Map.Entry<String, ElementBean> entry : entries) {
-               String key = entry.getKey();
-               ElementBean elementBean = entry.getValue();
-               generateViewBinding(key,elementBean);
-           }
+            Set<Map.Entry<String, ElementBean>> entries = mMaps.entrySet();
+            for (Map.Entry<String, ElementBean> entry : entries) {
+                String key = entry.getKey();
+                ElementBean elementBean = entry.getValue();
+                generateViewBinding(key, elementBean);
+            }
 
-           return true;
-       }
+            return true;
+        }
 
         return false;
     }
 
     /**
      * 生成代码
-     * @param className 全类名 com.cool.butterknife.MainActivity
+     *
+     * @param className   全类名 com.cool.butterknife.MainActivity
      * @param elementBean 保存被BindView OnClick注解的元素相关信息
      */
     private void generateViewBinding(String className, ElementBean elementBean) {
@@ -112,11 +115,15 @@ public class ViewProcessor extends AbstractProcessor {
                 .addAnnotation(ClassName.bestGuess(Constant.UITHREAD))
                 .addModifiers(Modifier.PUBLIC);
 
+        //如果有父类的话，构造函数中还要添加这句  super(target, source);
+        if (elementBean.hasSuperClass()) {
+            constructorMethodBuilder.addStatement("super(target, source)");
+        }
         //  构造函数中添加代码块
         constructorMethodBuilder.addStatement("this.target = target");
 
         //往构造函数中添加 target.textView = source.findViewById(2131165322);
-        for (int i = 0;bindViewBeans != null && i < bindViewBeans.size(); i++) {
+        for (int i = 0; bindViewBeans != null && i < bindViewBeans.size(); i++) {
             BindViewBean bindViewBean = bindViewBeans.get(i);
             constructorMethodBuilder.addStatement("target.$L = source.findViewById($L)", bindViewBean.getFiledName(), bindViewBean.getId());
         }
@@ -128,12 +135,12 @@ public class ViewProcessor extends AbstractProcessor {
         //        target.onClick(view);
         //      }
         //    });
-        for (int i = 0;onClickBeans != null && i < onClickBeans.size(); i++) {
+        for (int i = 0; onClickBeans != null && i < onClickBeans.size(); i++) {
             OnClickBean onClickBean = onClickBeans.get(i);
-            constructorMethodBuilder.addStatement("$T view$L = source.findViewById($L)", ClassName.bestGuess(Constant.VIEWPACKAGE),onClickBean.getId(), onClickBean.getId());
-            constructorMethodBuilder.addStatement("this.view$L = view$L",onClickBean.getId(),onClickBean.getId());
+            constructorMethodBuilder.addStatement("$T view$L = source.findViewById($L)", ClassName.bestGuess(Constant.VIEWPACKAGE), onClickBean.getId(), onClickBean.getId());
+            constructorMethodBuilder.addStatement("this.view$L = view$L", onClickBean.getId(), onClickBean.getId());
             TypeSpec typeSpec = generateAnonymousInnerClasses(onClickBean);
-            constructorMethodBuilder.addStatement("view$L.setOnClickListener($L)",onClickBean.getId(),typeSpec);
+            constructorMethodBuilder.addStatement("view$L.setOnClickListener($L)", onClickBean.getId(), typeSpec);
         }
 
         //创建构造函数
@@ -148,16 +155,21 @@ public class ViewProcessor extends AbstractProcessor {
         unbindMethodSpec.addStatement("this.target = null");
 
         //往unbind中添加 target.textView = null;
-        for (int i = 0;bindViewBeans != null && i < bindViewBeans.size(); i++) {
+        for (int i = 0; bindViewBeans != null && i < bindViewBeans.size(); i++) {
             BindViewBean bindViewBean = bindViewBeans.get(i);
             unbindMethodSpec.addStatement("target.$L = null", bindViewBean.getFiledName());
         }
 
         //往unbind中添加 view2131165218.setOnClickListener(null); view2131165218 = null;
-        for (int i = 0;onClickBeans != null && i < onClickBeans.size(); i++) {
+        for (int i = 0; onClickBeans != null && i < onClickBeans.size(); i++) {
             OnClickBean onClickBean = onClickBeans.get(i);
             unbindMethodSpec.addStatement("view$L.setOnClickListener(null)", onClickBean.getId());
             unbindMethodSpec.addStatement("view$L = null", onClickBean.getId());
+        }
+
+        //如果有父类的话还要在unbind中添加这句 super.unbind()
+        if (elementBean.hasSuperClass()) {
+            unbindMethodSpec.addStatement("super.unbind()");
         }
 
         //生成MainActivity_ViewBinding类
@@ -165,13 +177,21 @@ public class ViewProcessor extends AbstractProcessor {
                 .addField(ClassName.get(classTypeElement), Constant.TARGET, Modifier.PRIVATE)
                 .addMethod(constructor)
                 .addMethod(unbindMethodSpec.build())
-                .addSuperinterface(ClassName.bestGuess(Constant.UNBINDER))
                 .addModifiers(Modifier.PUBLIC);
 
+        //如果有父类则继承父类
+        if (elementBean.hasSuperClass()) {
+            String baseClassNameString = elementBean.superClassTypeMirror.toString() + Constant.VIEWBINDING;
+            ClassName baseClassName = ClassName.bestGuess(baseClassNameString);
+            typeSpec.superclass(baseClassName);
+        } else {
+            typeSpec.addSuperinterface(ClassName.bestGuess(Constant.UNBINDER));
+        }
+
         //生成成员变量 private View view2131165218;
-        for (int i = 0;onClickBeans != null && i < onClickBeans.size(); i++) {
+        for (int i = 0; onClickBeans != null && i < onClickBeans.size(); i++) {
             OnClickBean onClickBean = onClickBeans.get(i);
-            typeSpec.addField(ClassName.bestGuess(Constant.VIEWPACKAGE),"view"+onClickBean.getId(),Modifier.PRIVATE);
+            typeSpec.addField(ClassName.bestGuess(Constant.VIEWPACKAGE), "view" + onClickBean.getId(), Modifier.PRIVATE);
         }
 
         //获取包名
@@ -190,18 +210,17 @@ public class ViewProcessor extends AbstractProcessor {
 
     /**
      * 生成OnClickListener匿名内部类
-     *
-     *  new View.OnClickListener() {
-     *      @Override
-     *  public void onClick(View view) {
-     *  target.onClick(view);
-     *   }
-     *  }
+     * <p>
+     * new View.OnClickListener() {
      *
      * @param onClickBean
      * @return
+     * @Override public void onClick(View view) {
+     * target.onClick(view);
+     * }
+     * }
      */
-    private TypeSpec generateAnonymousInnerClasses(OnClickBean onClickBean){
+    private TypeSpec generateAnonymousInnerClasses(OnClickBean onClickBean) {
         TypeElement typeElement = mElementUtils.getTypeElement(Constant.ONCLICKLISTENER);
         ParameterizedTypeName.get(typeElement.asType());
         TypeSpec onclickListener = TypeSpec.anonymousClassBuilder("")
@@ -209,8 +228,8 @@ public class ViewProcessor extends AbstractProcessor {
                 .addMethod(MethodSpec.methodBuilder(Constant.ONCLICK)
                         .addAnnotation(Override.class)
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(ClassName.bestGuess(Constant.VIEWPACKAGE),Constant.VIEW)
-                        .addStatement("target.$L(view)",onClickBean.getMethodName())
+                        .addParameter(ClassName.bestGuess(Constant.VIEWPACKAGE), Constant.VIEW)
+                        .addStatement("target.$L(view)", onClickBean.getMethodName())
                         .build())
                 .build();
         return onclickListener;
@@ -218,34 +237,52 @@ public class ViewProcessor extends AbstractProcessor {
 
     /**
      * 获取被BindView注解的节点并添加到集合中
+     *
      * @param roundEnvironment
      */
     private void getBindViewBean(RoundEnvironment roundEnvironment) {
         Set<? extends Element> bindViewElementsAnnotatedWith = roundEnvironment.getElementsAnnotatedWith(BindView.class);
+
         for (Element element : bindViewElementsAnnotatedWith) {
             Element classElement = element.getEnclosingElement();
+            TypeElement superElement = (TypeElement) classElement;//父节点MainActivity，是类节点，强转
+            TypeMirror superMirror = superElement.getSuperclass();//父类 BaseActivity
+            String superClassName = superMirror.toString();//父类全类名
+
             String className = classElement.toString();
             String simpleClassName = classElement.getSimpleName().toString();
             ElementBean elementBean = mMaps.get(className);
 
-            if(elementBean == null){
+            if (elementBean == null) {
                 elementBean = new ElementBean();
+                mMaps.put(className, elementBean);
             }
-            if(elementBean.mBindViewList == null){
+            if (elementBean.mBindViewList == null) {
                 elementBean.mBindViewList = new ArrayList<>();
             }
-            elementBean.mBindViewList.add(new BindViewBean(element,simpleClassName));
+            elementBean.mBindViewList.add(new BindViewBean(element, simpleClassName));
+
+            //添加父类节点
+            if (!superClassName.startsWith("android.") && !superClassName.startsWith("java.")) {
+                elementBean.superClassTypeMirror = superMirror;
+            }
         }
     }
 
     /**
      * 获取被OnClick注解的节点并添加到集合中
+     *
      * @param roundEnvironment
      */
     private void getOnClickBean(RoundEnvironment roundEnvironment) {
         Set<? extends Element> clickElementsAnnotatedWith = roundEnvironment.getElementsAnnotatedWith(OnClick.class);
         for (Element element : clickElementsAnnotatedWith) {
-            Element classElement = element.getEnclosingElement();
+            Element classElement = element.getEnclosingElement();//父节点MainActivity
+
+            TypeElement superElement = (TypeElement) classElement;//父节点MainActivity,是类节点，强转
+            TypeMirror superMirror = superElement.getSuperclass();//父类 BaseActivity
+            String superClassName = superMirror.toString();//父类全类名
+
             String className = classElement.toString();
             String simpleClassName = classElement.getSimpleName().toString();
             OnClick onClick = element.getAnnotation(OnClick.class);
@@ -254,18 +291,22 @@ public class ViewProcessor extends AbstractProcessor {
             List<? extends VariableElement> parameters = executableElement.getParameters();
 
             ElementBean elementBean = mMaps.get(className);
-            if(elementBean == null){
+            if (elementBean == null) {
                 elementBean = new ElementBean();
-                mMaps.put(className,elementBean);
+                mMaps.put(className, elementBean);
             }
-            if(elementBean.mOnClickList == null){
+            if (elementBean.mOnClickList == null) {
                 elementBean.mOnClickList = new ArrayList<>();
             }
 
             int[] value = onClick.value();
             for (int id : value) {
-                OnClickBean onClickBean = new OnClickBean(element,simpleClassName,id,parameters);
+                OnClickBean onClickBean = new OnClickBean(element, simpleClassName, id, parameters);
                 elementBean.mOnClickList.add(onClickBean);
+            }
+            //添加父类节点
+            if (!superClassName.startsWith("android.") && !superClassName.startsWith("java.")) {
+                elementBean.superClassTypeMirror = superMirror;
             }
         }
     }

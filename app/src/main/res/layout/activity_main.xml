@@ -7,6 +7,8 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <include layout="@layout/layout_toolbar"/>
+
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"

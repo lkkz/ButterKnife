@@ -12,7 +12,7 @@ public class BindViewBean {
     private Element element;
     private String simpleClassName;
 
-    public BindViewBean(Element element,String simpleClassName) {
+    public BindViewBean(Element element, String simpleClassName) {
         this.element = element;
         this.simpleClassName = simpleClassName;
     }
