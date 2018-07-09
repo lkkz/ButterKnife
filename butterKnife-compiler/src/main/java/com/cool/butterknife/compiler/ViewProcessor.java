@@ -11,13 +11,11 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,7 +128,7 @@ public class ViewProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC);
 
         //如果有父类的话，构造函数中还要添加这句  super(target, source);
-        if (elementBean.hasSuperClass()) {
+        if (elementBean.hasSuperClass() && isHasViewBinding(elementBean.superClassTypeMirror)) {
             constructorMethodBuilder.addStatement("super(target, source)");
         }
         //  构造函数中添加代码块
@@ -182,7 +180,7 @@ public class ViewProcessor extends AbstractProcessor {
         }
 
         //如果有父类的话还要在unbind中添加这句 super.unbind()
-        if (elementBean.hasSuperClass()) {
+        if (elementBean.hasSuperClass() && isHasViewBinding(elementBean.superClassTypeMirror)) {
             unbindMethodSpec.addStatement("super.unbind()");
         }
 
@@ -194,8 +192,14 @@ public class ViewProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC);
 
         //如果有父类则继承父类
-        if (elementBean.hasSuperClass()) {
-            String baseClassNameString = elementBean.superClassTypeMirror.toString() + Constant.VIEWBINDING;
+        if (elementBean.hasSuperClass() && isHasViewBinding(elementBean.superClassTypeMirror)) {
+            String baseClassNameType = elementBean.superClassTypeMirror.toString();
+            if (baseClassNameType.contains("<")) {
+                int index = baseClassNameType.indexOf("<");
+                baseClassNameType = baseClassNameType.substring(0, index);
+
+            }
+            String baseClassNameString = baseClassNameType + Constant.VIEWBINDING;
             ClassName baseClassName = ClassName.bestGuess(baseClassNameString);
             typeSpec.superclass(baseClassName);
         } else {
@@ -220,6 +224,17 @@ public class ViewProcessor extends AbstractProcessor {
             e.printStackTrace();
         }
 
+    }
+
+    private boolean isHasViewBinding(TypeMirror superClassTypeMirror) {
+        String baseClassNameType = superClassTypeMirror.toString();
+        if (baseClassNameType.contains("<")) {
+            int index = baseClassNameType.indexOf("<");
+            baseClassNameType = baseClassNameType.substring(0, index);
+
+        }
+        ElementBean elementBean = mMaps.get(baseClassNameType);
+        return elementBean != null;
     }
 
     /**
