@@ -17,6 +17,7 @@ import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +53,19 @@ public class ViewProcessor extends AbstractProcessor {
     private Log log;
 
     private Map<String, ElementBean> mMaps = new HashMap<>();
+
+//    @Override
+//    public Set<String> getSupportedAnnotationTypes() {
+//        Set<String> set = new HashSet<>();
+//        set.add("com.cool.butterknife.annoation.OnClick");
+//        set.add("com.cool.butterknife.annoation.BindView");
+//        return set;
+//    }
+//
+//    @Override
+//    public SourceVersion getSupportedSourceVersion() {
+//        return SourceVersion.latestSupported();
+//    }
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {

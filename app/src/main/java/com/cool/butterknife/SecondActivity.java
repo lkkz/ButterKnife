@@ -9,7 +9,7 @@ import android.widget.Toast;
 
 import com.cool.butterknife.annoation.BindView;
 import com.cool.butterknife.annoation.OnClick;
-import com.cool.butterknife.core.Butterknife;
+import com.cool.butterknife.core.ButterKnife;
 import com.cool.butterknife.core.Unbinder;
 
 public class SecondActivity extends AppCompatActivity {
@@ -24,7 +24,7 @@ public class SecondActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_second);
-        unbinder = Butterknife.bind(this);
+        unbinder = ButterKnife.bind(this);
         mTextView.setText("我是第二个页面");
     }
 

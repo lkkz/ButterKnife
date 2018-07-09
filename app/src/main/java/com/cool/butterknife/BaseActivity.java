@@ -9,7 +9,7 @@ import android.view.View;
 
 import com.cool.butterknife.annoation.BindView;
 import com.cool.butterknife.annoation.OnClick;
-import com.cool.butterknife.core.Butterknife;
+import com.cool.butterknife.core.ButterKnife;
 import com.cool.butterknife.core.Unbinder;
 
 /**
@@ -26,7 +26,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentView());
-        unbinder = Butterknife.bind(this);
+        unbinder = ButterKnife.bind(this);
         if(mToolbar != null){
            setSupportActionBar(mToolbar);
            getSupportActionBar().setTitle(getToolbarTitle());

@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.widget.FrameLayout;
 
 import com.cool.butterknife.annoation.BindView;
-import com.cool.butterknife.core.Butterknife;
+import com.cool.butterknife.core.ButterKnife;
 
 public class FragmentActivity extends AppCompatActivity {
 
@@ -18,7 +18,7 @@ public class FragmentActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fragment);
-        Butterknife.bind(this);
+        ButterKnife.bind(this);
 
         FragmentManager supportFragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = supportFragmentManager.beginTransaction();

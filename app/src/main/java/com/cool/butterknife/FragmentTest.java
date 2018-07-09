@@ -12,7 +12,7 @@ import android.widget.Toast;
 
 import com.cool.butterknife.annoation.BindView;
 import com.cool.butterknife.annoation.OnClick;
-import com.cool.butterknife.core.Butterknife;
+import com.cool.butterknife.core.ButterKnife;
 import com.cool.butterknife.core.Unbinder;
 
 /**
@@ -28,7 +28,7 @@ public class FragmentTest extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View inflate = inflater.inflate(R.layout.fragment_test, container, false);
-        unbinder = Butterknife.bind(this, inflate);
+        unbinder = ButterKnife.bind(this, inflate);
         return inflate;
     }
 

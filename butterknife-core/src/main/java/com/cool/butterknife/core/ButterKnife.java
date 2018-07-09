@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * Created by cool on 2018/7/3.
  */
-public class Butterknife {
+public class ButterKnife {
 
     static final Map<Class<?>, Constructor<? extends Unbinder>> BINDINGS = new LinkedHashMap<>();
 

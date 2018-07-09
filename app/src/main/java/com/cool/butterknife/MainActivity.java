@@ -1,20 +1,11 @@
 package com.cool.butterknife;
 
 import android.content.Intent;
-import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.cool.butterknife.annoation.BindView;
 import com.cool.butterknife.annoation.OnClick;
-import com.cool.butterknife.core.Butterknife;
-import com.cool.butterknife.core.Unbinder;
-
-import java.util.List;
 
 /**
  * 测试父类继承关系
